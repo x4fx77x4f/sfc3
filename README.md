@@ -7,7 +7,7 @@ Provides chat commands in the form of a [StarfallEx](https://github.com/thegrb93
 3. (Optional) Connect a HUD component to the chip.
 
 ## Commands
-- `help`: List all commands.
+- `help [command]`: Get documentation for command, or list all commands if none specified.
 - `l <code>`: Run code on server. Chip owner only. ("Lua")
 - `ls <code>`: Run code on server and your own client. Chip owner only. ("Lua Shared")
 - `lm <code>`: Run code on your own client. ("Lua Myself")

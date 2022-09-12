@@ -36,7 +36,7 @@ end
 
 local command_prefix_short = "$"
 local command_prefix = string.format("%s%d ", command_prefix_short, chip():entIndex())
-local commands
+local commands, command_help
 
 local LUADEV_SERVER = {}
 local luadev_pending = {}
@@ -206,6 +206,14 @@ local function command_luadev_sc(sender, parameters, print_result, silent)
 end
 commands = {
 	help = function(sender, command, parameters, is_team)
+		if parameters ~= '' then
+			local help = command_help[parameters]
+			if help == nil then
+				return false, "No such command %q."
+			end
+			sfc3._printf_target(sender, "Help for %q: %s", parameters, help)
+			return true
+		end
 		local commands_list = {}
 		for k in pairs(commands) do
 			table.insert(commands_list, k)
@@ -263,6 +271,23 @@ commands = {
 		return command_luadev_sc(sender, parameters, true, true)
 	end,
 }
+command_help = {
+	help = "Get documentation for command, or list all commands if none specified.",
+	l = "Run code on server. Chip owner only.",
+	ls = "Run code on server and your own client. Chip owner only.",
+	lm = "Run code on your own client.",
+	lsc = "Run code on specified clients.",
+	p = "Run code on server and print the result. Chip owner only.",
+	ps = "Run code on server and your own client and print the result. Chip owner only.",
+	pm = "Run code on your own client and print the result.",
+	psc = "Run code on specified clients and print the result.",
+	sp = "Silently run code on server and print the result. Chip owner only.",
+	sps = "Silently run code on server and your own client and print the result. Chip owner only.",
+	spm = "Silently run code on your own client and print the result.",
+	spsc = "Silently run code on specified clients and print the result.",
+}
+commands.man = commands.help
+command_help.man = command_help.help
 sfc3.commands = commands
 
 net.receive(sfc3.NET, function(length, sender)
