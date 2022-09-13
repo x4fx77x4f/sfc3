@@ -39,10 +39,11 @@ local command_prefix = string.format("%s%d ", command_prefix_short, chip():entIn
 local commands, command_help
 
 local LUADEV_SERVER = {}
+local LUADEV_EVERYONE = {}
 local luadev_pending = {}
 sfc3._luadev_pending = luadev_pending
 local function command_luadev(sender, targets, code, print_result, silent)
-	local server = false
+	local server, everyone = false, false
 	if #targets == 0 then
 		return false, "No targets."
 	elseif sender ~= owner() then
@@ -52,10 +53,26 @@ local function command_luadev(sender, targets, code, print_result, silent)
 			end
 		end
 	else
+		local lookup = {}
 		for i=#targets, 1, -1 do
-			if targets[i] == LUADEV_SERVER then
-				server = true
+			local target = targets[i]
+			if target == LUADEV_SERVER then
 				table.remove(targets, i)
+				server = true
+			elseif target == LUADEV_EVERYONE then
+				table.remove(targets, i)
+				everyone = true
+				local all_players = find.allPlayers()
+				for j=1, #all_players do
+					local ply = all_players[j]
+					if not ply:isBot() and not lookup[ply] then
+						table.insert(targets, ply)
+					end
+				end
+			elseif lookup[target] then
+				table.remove(targets, i)
+			else
+				lookup[target] = true
 			end
 		end
 	end
@@ -75,14 +92,19 @@ local function command_luadev(sender, targets, code, print_result, silent)
 			table.insert(t, ",")
 		end
 	end
-	for i=1, #targets do
-		if i ~= 1 then
-			table.insert(t, sfc3.output_color)
-			table.insert(t, ",")
+	if everyone then
+		table.insert(t, sfc3.color_client)
+		table.insert(t, "everyone")
+	else
+		for i=1, #targets do
+			if i ~= 1 then
+				table.insert(t, sfc3.output_color)
+				table.insert(t, ",")
+			end
+			local target = targets[i]
+			table.insert(t, team.getColor(target:getTeam()))
+			table.insert(t, target == sender and "themselves" or target:getName())
 		end
-		local target = targets[i]
-		table.insert(t, team.getColor(target:getTeam()))
-		table.insert(t, target == sender and "themselves" or target:getName())
 	end
 	table.insert(t, sfc3.output_color)
 	table.insert(t, ": "..code)
@@ -138,13 +160,7 @@ local reserved_targets = {
 		table.insert(targets, sender)
 	end,
 	all = function(targets, sender)
-		local all_players = find.allPlayers()
-		for i=1, #all_players do
-			local ply = all_players[i]
-			if not ply:isBot() then
-				table.insert(targets, ply)
-			end
-		end
+		table.insert(targets, LUADEV_EVERYONE)
 	end,
 	them = function(targets, sender)
 		local all_players = find.allPlayers()
@@ -246,7 +262,7 @@ commands = {
 	psc = function(sender, command, parameters, is_team)
 		return command_luadev_sc(sender, parameters, true)
 	end,
-	l = function(sender, command, parameters, is_team)
+	sl = function(sender, command, parameters, is_team)
 		return command_luadev(sender, {LUADEV_SERVER}, parameters, false, true)
 	end,
 	sls = function(sender, command, parameters, is_team)
@@ -339,6 +355,10 @@ hook.add('PlayerSay', sfc3.HOOK, function(sender, message, is_team)
 		local parameters = first_space == nil and "" or string.sub(message, first_space+1)
 		local success, retval = command_func(sender, command, parameters, is_team)
 		if not success then
+			if type(retval) == 'table' then
+				retval = rawget(retval, 'message')
+			end
+			retval = tostring(retval)
 			sfc3._print_target(sender, retval)
 		end
 		return ""
