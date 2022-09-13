@@ -153,8 +153,24 @@ local function consume_pending(identifier, sender)
 		return nil
 	end
 	pending[sender] = nil
+	if next(pending) == nil then
+		luadev_pending[identifier] = nil
+	end
 	return pending
 end
+timer.create(sfc3.TIMER..'_pending_gc', 10, 0, function()
+	for identifier, pending in pairs(luadev_pending) do
+		local garbage = true
+		for ply in pairs(pending) do
+			if isValid(ply) then
+				garbage = false
+			end
+		end
+		if garbage then
+			luadev_pending[identifier] = nil
+		end
+	end
+end)
 local reserved_targets = {
 	me = function(targets, sender)
 		table.insert(targets, sender)
