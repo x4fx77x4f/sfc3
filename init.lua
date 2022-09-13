@@ -36,7 +36,29 @@ end
 
 local command_prefix_short = "$"
 local command_prefix = string.format("%s%d ", command_prefix_short, chip():entIndex())
-local commands, command_help
+local commands, command_help = {}, {}
+sfc3.commands = commands
+sfc3.command_help = command_help
+commands.help = function(sender, command, parameters, is_team)
+	if parameters ~= '' then
+		local help = command_help[parameters]
+		if help == nil then
+			return false, "No such command %q."
+		end
+		sfc3._printf_target(sender, "Help for %q: %s", parameters, help)
+		return true
+	end
+	local commands_list = {}
+	for k in pairs(commands) do
+		table.insert(commands_list, k)
+	end
+	commands_list = table.concat(commands_list, ", ")
+	sfc3._printf_target(sender, "Available commands: %s", commands_list)
+	return true
+end
+command_help.help = "Get documentation for command, or list all commands if none specified."
+commands.man = commands.help
+command_help.man = command_help.help
 
 local LUADEV_SERVER = {}
 local LUADEV_EVERYONE = {}
@@ -236,91 +258,70 @@ local function command_luadev_sc(sender, parameters, print_result, silent)
 	local code = string.sub(parameters, second_space+1)
 	return command_luadev(sender, targets, code, print_result, silent)
 end
-commands = {
-	help = function(sender, command, parameters, is_team)
-		if parameters ~= '' then
-			local help = command_help[parameters]
-			if help == nil then
-				return false, "No such command %q."
-			end
-			sfc3._printf_target(sender, "Help for %q: %s", parameters, help)
-			return true
-		end
-		local commands_list = {}
-		for k in pairs(commands) do
-			table.insert(commands_list, k)
-		end
-		commands_list = table.concat(commands_list, ", ")
-		sfc3._printf_target(sender, "Available commands: %s", commands_list)
-		return true
-	end,
-	l = function(sender, command, parameters, is_team)
-		return command_luadev(sender, {LUADEV_SERVER}, parameters, false)
-	end,
-	ls = function(sender, command, parameters, is_team)
-		return command_luadev(sender, {LUADEV_SERVER, sender}, parameters, false)
-	end,
-	lm = function(sender, command, parameters, is_team)
-		return command_luadev(sender, {sender}, parameters, false)
-	end,
-	lsc = function(sender, command, parameters, is_team)
-		return command_luadev_sc(sender, parameters, false)
-	end,
-	p = function(sender, command, parameters, is_team)
-		return command_luadev(sender, {LUADEV_SERVER}, parameters, true)
-	end,
-	ps = function(sender, command, parameters, is_team)
-		return command_luadev(sender, {LUADEV_SERVER, sender}, parameters, true)
-	end,
-	pm = function(sender, command, parameters, is_team)
-		return command_luadev(sender, {sender}, parameters, true)
-	end,
-	psc = function(sender, command, parameters, is_team)
-		return command_luadev_sc(sender, parameters, true)
-	end,
-	sl = function(sender, command, parameters, is_team)
-		return command_luadev(sender, {LUADEV_SERVER}, parameters, false, true)
-	end,
-	sls = function(sender, command, parameters, is_team)
-		return command_luadev(sender, {LUADEV_SERVER, sender}, parameters, false, true)
-	end,
-	slm = function(sender, command, parameters, is_team)
-		return command_luadev(sender, {sender}, parameters, false, true)
-	end,
-	slsc = function(sender, command, parameters, is_team)
-		return command_luadev_sc(sender, parameters, false, true)
-	end,
-	sp = function(sender, command, parameters, is_team)
-		return command_luadev(sender, {LUADEV_SERVER}, parameters, true, true)
-	end,
-	sps = function(sender, command, parameters, is_team)
-		return command_luadev(sender, {LUADEV_SERVER, sender}, parameters, true, true)
-	end,
-	spm = function(sender, command, parameters, is_team)
-		return command_luadev(sender, {sender}, parameters, true, true)
-	end,
-	spsc = function(sender, command, parameters, is_team)
-		return command_luadev_sc(sender, parameters, true, true)
-	end,
-}
-command_help = {
-	help = "Get documentation for command, or list all commands if none specified.",
-	l = "Run code on server. Chip owner only.",
-	ls = "Run code on server and your own client. Chip owner only.",
-	lm = "Run code on your own client.",
-	lsc = "Run code on specified clients.",
-	p = "Run code on server and print the result. Chip owner only.",
-	ps = "Run code on server and your own client and print the result. Chip owner only.",
-	pm = "Run code on your own client and print the result.",
-	psc = "Run code on specified clients and print the result.",
-	sp = "Silently run code on server and print the result. Chip owner only.",
-	sps = "Silently run code on server and your own client and print the result. Chip owner only.",
-	spm = "Silently run code on your own client and print the result.",
-	spsc = "Silently run code on specified clients and print the result.",
-}
-commands.man = commands.help
-command_help.man = command_help.help
-sfc3.commands = commands
+commands.l = function(sender, command, parameters, is_team)
+	return command_luadev(sender, {LUADEV_SERVER}, parameters, false)
+end
+command_help.l = "Run code on server. Chip owner only."
+commands.ls = function(sender, command, parameters, is_team)
+	return command_luadev(sender, {LUADEV_SERVER, sender}, parameters, false)
+end
+command_help.ls = "Run code on server and your own client. Chip owner only."
+commands.lm = function(sender, command, parameters, is_team)
+	return command_luadev(sender, {sender}, parameters, false)
+end
+command_help.lm = "Run code on your own client."
+commands.lsc = function(sender, command, parameters, is_team)
+	return command_luadev_sc(sender, parameters, false)
+end
+command_help.lsc = "Run code on specified clients."
+commands.p = function(sender, command, parameters, is_team)
+	return command_luadev(sender, {LUADEV_SERVER}, parameters, true)
+end
+command_help.p = "Run code on server and print the result. Chip owner only."
+commands.ps = function(sender, command, parameters, is_team)
+	return command_luadev(sender, {LUADEV_SERVER, sender}, parameters, true)
+end
+command_help.ps = "Run code on server and your own client and print the result. Chip owner only."
+commands.pm = function(sender, command, parameters, is_team)
+	return command_luadev(sender, {sender}, parameters, true)
+end
+command_help.pm = "Run code on your own client and print the result."
+commands.psc = function(sender, command, parameters, is_team)
+	return command_luadev_sc(sender, parameters, true)
+end
+command_help.psc = "Run code on specified clients and print the result."
+commands.sl = function(sender, command, parameters, is_team)
+	return command_luadev(sender, {LUADEV_SERVER}, parameters, false, true)
+end
+command_help.sl = "Silently run code on server. Chip owner only."
+commands.sls = function(sender, command, parameters, is_team)
+	return command_luadev(sender, {LUADEV_SERVER, sender}, parameters, false, true)
+end
+command_help.sls = "Silently run code on server and your own client. Chip owner only."
+commands.slm = function(sender, command, parameters, is_team)
+	return command_luadev(sender, {sender}, parameters, false, true)
+end
+command_help.slm = "Silently run code on your own client."
+commands.slsc = function(sender, command, parameters, is_team)
+	return command_luadev_sc(sender, parameters, false, true)
+end
+command_help.slsc = "Silently run code on specified clients."
+commands.sp = function(sender, command, parameters, is_team)
+	return command_luadev(sender, {LUADEV_SERVER}, parameters, true, true)
+end
+command_help.sp = "Silently run code on server and print the result. Chip owner only."
+commands.sps = function(sender, command, parameters, is_team)
+	return command_luadev(sender, {LUADEV_SERVER, sender}, parameters, true, true)
+end
+command_help.sps = "Silently run code on server and your own client and print the result. Chip owner only."
+commands.spm = function(sender, command, parameters, is_team)
+	return command_luadev(sender, {sender}, parameters, true, true)
+end
+command_help.spm = "Silently run code on your own client and print the result."
+commands.spsc = function(sender, command, parameters, is_team)
+	return command_luadev_sc(sender, parameters, true, true)
+end
+command_help.spsc = "Silently run code on specified clients and print the result."
 
 net.receive(sfc3.NET, function(length, sender)
 	local id = net.readUInt(sfc3.NET_BITS)
