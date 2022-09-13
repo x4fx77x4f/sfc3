@@ -49,11 +49,18 @@ function sfc3.eval(identifier, code, executor, print_result)
 	end
 	local retvals = {pcall(func)}
 	if not retvals[1] then
-		err = tostring(retvals[2])
+		err = retvals[2]
+		if type(err) == 'table' then -- I hate that I have to do this
+			err = rawget(err, 'message')
+		end
+		err = tostring(err)
 		return false, err
 	end
 	if print_result then
 		table.remove(retvals, 1)
+		for i=1, #retvals do
+			retvals[i] = tostring(retvals[i])
+		end
 		retvals = table.concat(retvals, "\t")
 		return true, retvals
 	end
