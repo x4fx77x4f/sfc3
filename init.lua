@@ -61,10 +61,12 @@ commands.man = commands.help
 command_help.man = command_help.help
 
 local LUADEV_SERVER = {}
+sfc3.LUADEV_SERVER = LUADEV_SERVER
 local LUADEV_EVERYONE = {}
+sfc3.LUADEV_EVERYONE = LUADEV_EVERYONE
 local luadev_pending = {}
-sfc3._luadev_pending = luadev_pending
-local function command_luadev(sender, targets, code, print_result, silent)
+sfc3.luadev_pending = luadev_pending
+local function luadev_eval(sender, targets, code, print_result, silent)
 	local server, everyone = false, false
 	if #targets == 0 then
 		return false, "No targets."
@@ -165,7 +167,8 @@ local function command_luadev(sender, targets, code, print_result, silent)
 	end
 	return true
 end
-local function consume_pending(identifier, sender)
+sfc3.luadev_eval = luadev_eval
+local function luadev_pending_consume(identifier, sender)
 	local pending = luadev_pending[identifier]
 	if pending == nil then
 		return nil
@@ -180,7 +183,8 @@ local function consume_pending(identifier, sender)
 	end
 	return pending
 end
-timer.create(sfc3.TIMER..'_pending_gc', 10, 0, function()
+sfc3.luadev_pending_consume = luadev_pending_consume
+timer.create(sfc3.TIMER..'_luadev_pending_gc', 10, 0, function()
 	for identifier, pending in pairs(luadev_pending) do
 		local garbage = true
 		for ply in pairs(pending) do
@@ -193,7 +197,7 @@ timer.create(sfc3.TIMER..'_pending_gc', 10, 0, function()
 		end
 	end
 end)
-local reserved_targets = {
+local luadev_targets = {
 	me = function(targets, sender)
 		table.insert(targets, sender)
 	end,
@@ -221,15 +225,16 @@ local reserved_targets = {
 		table.insert(targets, LUADEV_SERVER)
 	end,
 }
-reserved_targets.you = reserved_targets.this
-local function parse_targets(parameters, sender)
+sfc3.luadev_targets = luadev_targets
+luadev_targets.you = luadev_targets.this
+local function luadev_targets_parse(parameters, sender)
 	parameters = string.split(parameters, ',')
 	local targets = {}
 	for i=1, #parameters do
 		local parameter = parameters[i]
 		if string.sub(parameter, 1, 1) == '#' then
 			parameter = string.sub(parameter, 2)
-			local parser = reserved_targets[parameter]
+			local parser = luadev_targets[parameter]
 			if parser == nil then
 				return false, string.format("No such target %q.", parameter)
 			end
@@ -249,77 +254,79 @@ local function parse_targets(parameters, sender)
 	end
 	return true, targets
 end
-local function command_luadev_sc(sender, parameters, print_result, silent)
+sfc3.luadev_targets_parse = luadev_targets_parse
+local function luadev_eval_sc(sender, parameters, print_result, silent)
 	local second_space = string.find(parameters, ' ', nil, true)
-	local success, targets = parse_targets(string.sub(parameters, 1, second_space-1), sender)
+	local success, targets = luadev_targets_parse(string.sub(parameters, 1, second_space-1), sender)
 	if not success then
 		return success, targets
 	end
 	local code = string.sub(parameters, second_space+1)
-	return command_luadev(sender, targets, code, print_result, silent)
+	return luadev_eval(sender, targets, code, print_result, silent)
 end
+sfc3.luadev_eval_sc = luadev_eval_sc
 commands.l = function(sender, command, parameters, is_team)
-	return command_luadev(sender, {LUADEV_SERVER}, parameters, false)
+	return luadev_eval(sender, {LUADEV_SERVER}, parameters, false)
 end
 command_help.l = "Run code on server. Chip owner only."
 commands.ls = function(sender, command, parameters, is_team)
-	return command_luadev(sender, {LUADEV_SERVER, sender}, parameters, false)
+	return luadev_eval(sender, {LUADEV_SERVER, sender}, parameters, false)
 end
 command_help.ls = "Run code on server and your own client. Chip owner only."
 commands.lm = function(sender, command, parameters, is_team)
-	return command_luadev(sender, {sender}, parameters, false)
+	return luadev_eval(sender, {sender}, parameters, false)
 end
 command_help.lm = "Run code on your own client."
 commands.lsc = function(sender, command, parameters, is_team)
-	return command_luadev_sc(sender, parameters, false)
+	return luadev_eval_sc(sender, parameters, false)
 end
 command_help.lsc = "Run code on specified clients."
 commands.p = function(sender, command, parameters, is_team)
-	return command_luadev(sender, {LUADEV_SERVER}, parameters, true)
+	return luadev_eval(sender, {LUADEV_SERVER}, parameters, true)
 end
 command_help.p = "Run code on server and print the result. Chip owner only."
 commands.ps = function(sender, command, parameters, is_team)
-	return command_luadev(sender, {LUADEV_SERVER, sender}, parameters, true)
+	return luadev_eval(sender, {LUADEV_SERVER, sender}, parameters, true)
 end
 command_help.ps = "Run code on server and your own client and print the result. Chip owner only."
 commands.pm = function(sender, command, parameters, is_team)
-	return command_luadev(sender, {sender}, parameters, true)
+	return luadev_eval(sender, {sender}, parameters, true)
 end
 command_help.pm = "Run code on your own client and print the result."
 commands.psc = function(sender, command, parameters, is_team)
-	return command_luadev_sc(sender, parameters, true)
+	return luadev_eval_sc(sender, parameters, true)
 end
 command_help.psc = "Run code on specified clients and print the result."
 commands.sl = function(sender, command, parameters, is_team)
-	return command_luadev(sender, {LUADEV_SERVER}, parameters, false, true)
+	return luadev_eval(sender, {LUADEV_SERVER}, parameters, false, true)
 end
 command_help.sl = "Silently run code on server. Chip owner only."
 commands.sls = function(sender, command, parameters, is_team)
-	return command_luadev(sender, {LUADEV_SERVER, sender}, parameters, false, true)
+	return luadev_eval(sender, {LUADEV_SERVER, sender}, parameters, false, true)
 end
 command_help.sls = "Silently run code on server and your own client. Chip owner only."
 commands.slm = function(sender, command, parameters, is_team)
-	return command_luadev(sender, {sender}, parameters, false, true)
+	return luadev_eval(sender, {sender}, parameters, false, true)
 end
 command_help.slm = "Silently run code on your own client."
 commands.slsc = function(sender, command, parameters, is_team)
-	return command_luadev_sc(sender, parameters, false, true)
+	return luadev_eval_sc(sender, parameters, false, true)
 end
 command_help.slsc = "Silently run code on specified clients."
 commands.sp = function(sender, command, parameters, is_team)
-	return command_luadev(sender, {LUADEV_SERVER}, parameters, true, true)
+	return luadev_eval(sender, {LUADEV_SERVER}, parameters, true, true)
 end
 command_help.sp = "Silently run code on server and print the result. Chip owner only."
 commands.sps = function(sender, command, parameters, is_team)
-	return command_luadev(sender, {LUADEV_SERVER, sender}, parameters, true, true)
+	return luadev_eval(sender, {LUADEV_SERVER, sender}, parameters, true, true)
 end
 command_help.sps = "Silently run code on server and your own client and print the result. Chip owner only."
 commands.spm = function(sender, command, parameters, is_team)
-	return command_luadev(sender, {sender}, parameters, true, true)
+	return luadev_eval(sender, {sender}, parameters, true, true)
 end
 command_help.spm = "Silently run code on your own client and print the result."
 commands.spsc = function(sender, command, parameters, is_team)
-	return command_luadev_sc(sender, parameters, true, true)
+	return luadev_eval_sc(sender, parameters, true, true)
 end
 command_help.spsc = "Silently run code on specified clients and print the result."
 
@@ -327,7 +334,7 @@ net.receive(sfc3.NET, function(length, sender)
 	local id = net.readUInt(sfc3.NET_BITS)
 	if id == sfc3.NET_EVAL_RETURN then
 		local identifier = net.readUInt(32)
-		local pending = consume_pending(identifier, sender)
+		local pending = luadev_pending_consume(identifier, sender)
 		if pending == nil or not pending.print_result then
 			return
 		end
@@ -336,7 +343,7 @@ net.receive(sfc3.NET, function(length, sender)
 		sfc3._print_target(pending.executor, "Return from ", team.getColor(sender:getTeam()), sender:getName(), sfc3.output_color, ": "..data)
 	elseif id == sfc3.NET_EVAL_RETURN_SYNTAX then
 		local identifier = net.readUInt(32)
-		local pending = consume_pending(identifier, sender)
+		local pending = luadev_pending_consume(identifier, sender)
 		if pending == nil then
 			return
 		end
@@ -345,7 +352,7 @@ net.receive(sfc3.NET, function(length, sender)
 		sfc3._print_target(pending.executor, "Syntax error from ", team.getColor(sender:getTeam()), sender:getName(), sfc3.output_color, ": "..data)
 	elseif id == sfc3.NET_EVAL_RETURN_ERROR then
 		local identifier = net.readUInt(32)
-		local pending = consume_pending(identifier, sender)
+		local pending = luadev_pending_consume(identifier, sender)
 		if pending == nil then
 			return
 		end
