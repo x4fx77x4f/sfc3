@@ -67,9 +67,9 @@ return function(sfc3)
 	end
 	sfc3.goto_target_parse = goto_target_parse
 	
-	local function goto_cmd(sender, target)
+	local function goto_cmd(sender, pos, target)
 		local angles = sender:getEyeAngles()
-		seat:setPos(target)
+		seat:setPos(pos)
 		seat:use()
 		seat:ejectDriver()
 		seat:setPos(seat_pos)
@@ -86,8 +86,11 @@ return function(sfc3)
 		if not success then
 			return success, target
 		end
-		if type(target) ~= 'Vector' then
-			target = target:getPos()
+		local pos
+		if type(target) == 'Vector' then
+			pos, target = target
+		else
+			pos = target:getPos()
 		end
 		local stack = goto_stacks[sender]
 		if stack == nil then
@@ -95,7 +98,16 @@ return function(sfc3)
 			goto_stacks[sender] = stack
 		end
 		table.insert(stack, sender:getPos())
-		return pcall(goto_cmd, sender, target)
+		if isValid(target) then
+			if type(target) == 'Player' then
+				sfc3.print(team.getColor(sender:getTeam()), sender:getName(), sfc3.output_color, " teleported to ", team.getColor(target:getTeam()), target:getName(), sfc3.output_color, ".")
+			else
+				sfc3.print(team.getColor(sender:getTeam()), sender:getName(), sfc3.output_color, " teleported to "..tostring(target)..".")
+			end
+		else
+			sfc3.print(team.getColor(sender:getTeam()), sender:getName(), sfc3.output_color, " teleported somewhere.")
+		end
+		return pcall(goto_cmd, sender, pos, target)
 	end
 	command_help['goto'] = "Teleport yourself to the specified target."
 	commands['return'] = function(sender, commands, parameters, is_team)
@@ -106,11 +118,12 @@ return function(sfc3)
 		if stack == nil then
 			return false, "No previous position."
 		end
-		local target = table.remove(stack)
-		if not next(stack) then
+		local pos = table.remove(stack)
+		if next(stack) == nil then
 			goto_stacks[sender] = nil
 		end
-		return pcall(goto_cmd, sender, target)
+		sfc3.print(team.getColor(sender:getTeam()), sender:getName(), sfc3.output_color, " returned to their previous position.")
+		return pcall(goto_cmd, sender, pos)
 	end
 	command_help['return'] = "Teleport yourself back to your previous position."
 end
