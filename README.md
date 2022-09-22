@@ -11,6 +11,8 @@ Provides chat commands in the form of a [StarfallEx](https://github.com/thegrb93
 - `l <code>`: Run code on server. Chip owner only. ("Lua")
 - `ls <code>`: Run code on server and your own client. Chip owner only. ("Lua Shared")
 - `lm <code>`: Run code on your own client. ("Lua Myself")
-- `lsc <targets> <code>`: Run code on specified targets. ("Lua Send Clients")
+- `lsc <targets> <code>`: Run code on specified targets. ("Lua Send Clients") Targets can be player names (e.g. `$psc sar 2+2` will run `return 2+2` on a player named "Sarah", so long as only one name matches), `#me` (yourself), `#all` (all clients), `#them` (every client except yours), `#this`/`#you` (the player you're looking at), or `#server`. Separated by commas.
 - Replace `l` with `p` in previous 4 commands to also print output. ("Print")
 - Prepend `s` to previous 5/8 commands to also only print in chat for yourself. ("Silent")
+- `goto <target>`: Teleport yourself to specified target. Chip owner only. Target can be a player name, `#chip`, `#there` (the position you're looking at), `#seat` (the invisible seat used for teleportation), or `#` followed by an entity index.
+- `return`: Teleport yourself to your previous position. Every `goto` adds your position before the teleport to the end of a stack, and `return` will pop the last element off the stack and teleport you there.
