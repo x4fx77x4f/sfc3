@@ -60,6 +60,9 @@ dofile('./sh_luadev.lua')(sfc3)
 --@include ./sv_luadev.lua
 dofile('./sv_luadev.lua')(sfc3)
 
+--@include ./sv_goto.lua
+dofile('./sv_goto.lua')(sfc3)
+
 hook.add('PlayerSay', sfc3.ID_HOOK, function(sender, message, is_team)
 	local short = false
 	if string.sub(message, 1, #command_prefix) == command_prefix then
