@@ -8,6 +8,9 @@ return function(sfc3)
 	local luadev_pending = {}
 	sfc3.luadev_pending = luadev_pending
 	local function luadev_cmd(sender, targets, code, print_result, silent)
+		if code == nil or code == '' then
+			return false, "Malformed parameters."
+		end
 		local server, everyone = false, false
 		if #targets == 0 then
 			return false, "No targets."
@@ -198,6 +201,9 @@ return function(sfc3)
 	sfc3.luadev_targets_parse = luadev_targets_parse
 	local function luadev_cmd_sc(sender, parameters, print_result, silent)
 		local second_space = string.find(parameters, ' ', nil, true)
+		if second_space == nil then
+			return false, "Malformed parameters."
+		end
 		local success, targets = luadev_targets_parse(string.sub(parameters, 1, second_space-1), sender)
 		if not success then
 			return success, targets
