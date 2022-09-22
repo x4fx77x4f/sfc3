@@ -73,7 +73,7 @@ return function(sfc3)
 		end
 		table.insert(t, sfc3.output_color)
 		table.insert(t, ": "..code)
-		sfc3._print_target(silent and sender or nil, unpack(t))
+		sfc3.tprint(silent and sender or nil, unpack(t))
 		local identifier = math.random(0, 2^32-1)
 		local pending = {
 			executor = sender,
@@ -98,12 +98,12 @@ return function(sfc3)
 			local success, result, syntax = sfc3.luadev_eval(identifier, code, executor, print_result)
 			if not success then
 				if syntax then
-					sfc3._print_target(sender, "Syntax error from ", sfc3.color_server, "server", sfc3.output_color, ": "..result)
+					sfc3.tprint(sender, "Syntax error from ", sfc3.color_server, "server", sfc3.output_color, ": "..result)
 				else
-					sfc3._print_target(sender, "Runtime error from ", sfc3.color_server, "server", sfc3.output_color, ": "..result)
+					sfc3.tprint(sender, "Runtime error from ", sfc3.color_server, "server", sfc3.output_color, ": "..result)
 				end
 			elseif print_result then
-					sfc3._print_target(sender, "Return from ", sfc3.color_server, "server", sfc3.output_color, ": "..result)
+					sfc3.tprint(sender, "Return from ", sfc3.color_server, "server", sfc3.output_color, ": "..result)
 			end
 		end
 		return true
@@ -278,7 +278,7 @@ return function(sfc3)
 		end
 		local length = net.readUInt(16)
 		local data = net.readData(length)
-		sfc3._print_target(pending.executor, "Return from ", team.getColor(sender:getTeam()), sender:getName(), sfc3.output_color, ": "..data)
+		sfc3.tprint(pending.executor, "Return from ", team.getColor(sender:getTeam()), sender:getName(), sfc3.output_color, ": "..data)
 	end
 	sfc3.net_incoming[sfc3.NET_LUADEV_ERROR_COMPILE] = function(length, sender)
 		local identifier = net.readUInt(32)
@@ -288,7 +288,7 @@ return function(sfc3)
 		end
 		local length = net.readUInt(16)
 		local data = net.readData(length)
-		sfc3._print_target(pending.executor, "Syntax error from ", team.getColor(sender:getTeam()), sender:getName(), sfc3.output_color, ": "..data)
+		sfc3.tprint(pending.executor, "Syntax error from ", team.getColor(sender:getTeam()), sender:getName(), sfc3.output_color, ": "..data)
 	end
 	sfc3.net_incoming[sfc3.NET_LUADEV_ERROR_RUNTIME] = function(length, sender)
 		local identifier = net.readUInt(32)
@@ -298,6 +298,6 @@ return function(sfc3)
 		end
 		local length = net.readUInt(16)
 		local data = net.readData(length)
-		sfc3._print_target(pending.executor, "Runtime error from ", team.getColor(sender:getTeam()), sender:getName(), sfc3.output_color, ": "..data)
+		sfc3.tprint(pending.executor, "Runtime error from ", team.getColor(sender:getTeam()), sender:getName(), sfc3.output_color, ": "..data)
 	end
 end

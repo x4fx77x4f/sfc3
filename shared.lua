@@ -7,6 +7,9 @@ sfc3.output_prefix_color = Color('#4d7bc8')
 sfc3.color_menu = Color('#4caf50')
 sfc3.color_client = Color('#dea909')
 sfc3.color_server = Color('#03a9f4')
+function sfc3.printf(...)
+	return sfc3.print(string.format(...))
+end
 
 local function enum(prefix, enum)
 	local bits = 1
@@ -25,11 +28,11 @@ sfc3.ID_NET = 'sfc3'
 sfc3.ID_HOOK = 'sfc3'
 sfc3.ID_TIMER = 'sfc3'
 enum('NET', {
+	'PRINT',
 	'LUADEV_EVAL',
 	'LUADEV_RETURN',
 	'LUADEV_ERROR_COMPILE',
 	'LUADEV_ERROR_RUNTIME',
-	'PRINT',
 })
 sfc3.net_incoming = {}
 net.receive(sfc3.ID_NET, function(length, sender)

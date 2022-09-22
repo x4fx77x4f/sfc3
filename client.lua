@@ -4,11 +4,11 @@
 local sfc3 = dofile('./shared.lua')
 
 if player() == owner() then
-	function sfc3._print(...)
+	function sfc3.print(...)
 		return print(sfc3.output_prefix_color, sfc3.output_prefix, sfc3.output_color, ...)
 	end
 else
-	function sfc3._print(...)
+	function sfc3.print(...)
 		if canPrintLocal ~= nil and canPrintLocal() then
 			return printLocal(sfc3.output_prefix_color, sfc3.output_prefix, sfc3.output_color, ...)
 		elseif render.isHUDActive() then
@@ -16,20 +16,26 @@ else
 		end
 	end
 end
-function sfc3._printf(...)
-	return sfc3._print(string.format(...))
-end
 sfc3.net_incoming[sfc3.NET_PRINT] = function(length)
-	local t = {}
-	local j = net.readUInt(8)
-	for i=1, j do
-		if net.readBit() == 1 then
-			t[i] = net.readColor(false)
+	local t, i = {}, 0
+	while true do
+		i = i+1
+		length = length-1
+		if length < 0 then
+			break
+		elseif net.readBit() == 1 then
+			length = length-8*4
+			if length < 0 then
+				break
+			end
+			t[i] = net.readColor()
 		else
-			t[i] = net.readString()
+			local s = net.readString()
+			length = length-(#s+1)*8
+			t[i] = s
 		end
 	end
-	return sfc3._print(unpack(t))
+	return sfc3.print(unpack(t))
 end
 
 --@include ./sh_luadev.lua

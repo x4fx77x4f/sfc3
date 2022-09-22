@@ -5,24 +5,16 @@
 --@include ./shared.lua
 local sfc3 = dofile('./shared.lua')
 
-function sfc3._print(...)
-	return print(sfc3.output_prefix_color, sfc3.output_prefix, sfc3.output_color, ...)
-end
-function sfc3._printf(...)
-	return sfc3._print(string.format(...))
-end
-function sfc3._print_target(target, ...)
+function sfc3.tprint(target, ...)
 	net.start(sfc3.ID_NET)
 		net.writeUInt(sfc3.NET_PRINT, sfc3.NET_BITS)
-		local j = select('#', ...)
-		net.writeUInt(j, 8)
-		for i=1, j do
+		for i=1, select('#', ...) do
 			local v = select(i, ...)
 			if v == nil then
 				break
 			elseif type(v) == 'Color' then
 				net.writeBit(1)
-				net.writeColor(v, false)
+				net.writeColor(v)
 			else
 				net.writeBit(0)
 				net.writeString(v)
@@ -30,8 +22,11 @@ function sfc3._print_target(target, ...)
 		end
 	net.send(target)
 end
-function sfc3._printf_target(target, ...)
-	return sfc3._print_target(target, string.format(...))
+function sfc3.tprintf(target, ...)
+	return sfc3.tprint(target, string.format(...))
+end
+function sfc3.print(...)
+	return sfc3.tprint(nil, ...)
 end
 
 local command_prefix_short = "$"
@@ -45,7 +40,7 @@ commands.help = function(sender, command, parameters, is_team)
 		if help == nil then
 			return false, "No such command %q."
 		end
-		sfc3._printf_target(sender, "Help for %q: %s", parameters, help)
+		sfc3.tprintf(sender, "Help for %q: %s", parameters, help)
 		return true
 	end
 	local commands_list = {}
@@ -53,7 +48,7 @@ commands.help = function(sender, command, parameters, is_team)
 		table.insert(commands_list, k)
 	end
 	commands_list = table.concat(commands_list, ", ")
-	sfc3._printf_target(sender, "Available commands: %s", commands_list)
+	sfc3.tprintf(sender, "Available commands: %s", commands_list)
 	return true
 end
 command_help.help = "Get documentation for command, or list all commands if none specified."
@@ -86,14 +81,14 @@ hook.add('PlayerSay', sfc3.ID_HOOK, function(sender, message, is_team)
 				retval = rawget(retval, 'message')
 			end
 			retval = tostring(retval)
-			sfc3._print_target(sender, retval)
+			sfc3.tprint(sender, retval)
 		end
 		return ""
 	--elseif short then
 		--return
 	end
-	sfc3._printf_target(sender, "Unknown command %q.", command)
+	sfc3.tprintf(sender, "Unknown command %q.", command)
 	return ""
 end)
 
-sfc3._printf("Run \"%shelp\" (chip owner only) or \"%shelp\" for commands.", command_prefix_short, command_prefix)
+sfc3.printf("Run \"%shelp\" (chip owner only) or \"%shelp\" for commands.", command_prefix_short, command_prefix)
