@@ -47,6 +47,7 @@ commands.help = function(sender, command, parameters, is_team)
 	for k in pairs(commands) do
 		table.insert(commands_list, k)
 	end
+	table.sort(commands_list)
 	commands_list = table.concat(commands_list, ", ")
 	sfc3.tprintf(sender, "Available commands: %s", commands_list)
 	return true
