@@ -10,9 +10,9 @@ sfc3.color_server = Color('#03a9f4')
 
 local function enum(prefix, enum)
 	local bits = 1
-	repeat
+	while 2^bits < #enum do
 		bits = bits+1
-	until 2^bits > #enum
+	end
 	assert(bits <= 32, "number of values in enum cannot exceed 2^32")
 	prefix = prefix..'_'
 	sfc3[prefix..'BITS'] = bits
@@ -20,10 +20,10 @@ local function enum(prefix, enum)
 		sfc3[prefix..enum[i]] = i-1
 	end
 end
-sfc3._enum = enum
-sfc3.NET = 'sfc3'
-sfc3.HOOK = 'sfc3'
-sfc3.TIMER = 'sfc3'
+sfc3.enum = enum
+sfc3.ID_NET = 'sfc3'
+sfc3.ID_HOOK = 'sfc3'
+sfc3.ID_TIMER = 'sfc3'
 enum('NET', {
 	'EVAL',
 	'EVAL_RETURN',
@@ -31,6 +31,24 @@ enum('NET', {
 	'EVAL_RETURN_ERROR',
 	'PRINT',
 })
+sfc3.net_incoming = {}
+net.receive(sfc3.ID_NET, function(length, sender)
+	if SERVER and not isValid(sender) then
+		return
+	end
+	repeat
+		length = length-sfc3.NET_BITS
+		if length < 0 then
+			return
+		end
+		local packet_type = net.readUInt(sfc3.NET_BITS)
+		local packet_handler = sfc3.net_incoming[packet_type]
+		if packet_handler == nil then
+			break
+		end
+		length = packet_handler(length, sender)
+	until length == nil
+end)
 
 function sfc3.eval(identifier, code, executor, print_result)
 	local func, err = loadstring(code, "Validation")

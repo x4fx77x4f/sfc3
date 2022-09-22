@@ -12,7 +12,7 @@ function sfc3._printf(...)
 	return sfc3._print(string.format(...))
 end
 function sfc3._print_target(target, ...)
-	net.start(sfc3.NET)
+	net.start(sfc3.ID_NET)
 		net.writeUInt(sfc3.NET_PRINT, sfc3.NET_BITS)
 		local j = select('#', ...)
 		net.writeUInt(j, 8)
@@ -143,7 +143,7 @@ local function luadev_eval(sender, targets, code, print_result, silent)
 		for i=1, #targets do
 			pending[targets[i]] = true
 		end
-		net.start(sfc3.NET)
+		net.start(sfc3.ID_NET)
 			net.writeUInt(sfc3.NET_EVAL, sfc3.NET_BITS)
 			net.writeUInt(identifier, 32)
 			net.writeEntity(sender)
@@ -184,7 +184,7 @@ local function luadev_pending_consume(identifier, sender)
 	return pending
 end
 sfc3.luadev_pending_consume = luadev_pending_consume
-timer.create(sfc3.TIMER..'_luadev_pending_gc', 10, 0, function()
+timer.create(sfc3.ID_TIMER..'_luadev_pending_gc', 10, 0, function()
 	for identifier, pending in pairs(luadev_pending) do
 		local garbage = true
 		for ply in pairs(pending) do
@@ -330,39 +330,38 @@ commands.spsc = function(sender, command, parameters, is_team)
 end
 command_help.spsc = "Silently run code on specified clients and print the result."
 
-net.receive(sfc3.NET, function(length, sender)
-	local id = net.readUInt(sfc3.NET_BITS)
-	if id == sfc3.NET_EVAL_RETURN then
-		local identifier = net.readUInt(32)
-		local pending = luadev_pending_consume(identifier, sender)
-		if pending == nil or not pending.print_result then
-			return
-		end
-		local length = net.readUInt(16)
-		local data = net.readData(length)
-		sfc3._print_target(pending.executor, "Return from ", team.getColor(sender:getTeam()), sender:getName(), sfc3.output_color, ": "..data)
-	elseif id == sfc3.NET_EVAL_RETURN_SYNTAX then
-		local identifier = net.readUInt(32)
-		local pending = luadev_pending_consume(identifier, sender)
-		if pending == nil then
-			return
-		end
-		local length = net.readUInt(16)
-		local data = net.readData(length)
-		sfc3._print_target(pending.executor, "Syntax error from ", team.getColor(sender:getTeam()), sender:getName(), sfc3.output_color, ": "..data)
-	elseif id == sfc3.NET_EVAL_RETURN_ERROR then
-		local identifier = net.readUInt(32)
-		local pending = luadev_pending_consume(identifier, sender)
-		if pending == nil then
-			return
-		end
-		local length = net.readUInt(16)
-		local data = net.readData(length)
-		sfc3._print_target(pending.executor, "Runtime error from ", team.getColor(sender:getTeam()), sender:getName(), sfc3.output_color, ": "..data)
+sfc3.net_incoming[sfc3.NET_EVAL_RETURN] = function(length, sender)
+	local identifier = net.readUInt(32)
+	local pending = luadev_pending_consume(identifier, sender)
+	if pending == nil or not pending.print_result then
+		return
 	end
-end)
+	local length = net.readUInt(16)
+	local data = net.readData(length)
+	sfc3._print_target(pending.executor, "Return from ", team.getColor(sender:getTeam()), sender:getName(), sfc3.output_color, ": "..data)
+end
+sfc3.net_incoming[sfc3.NET_EVAL_RETURN_SYNTAX] = function(length, sender)
+	local identifier = net.readUInt(32)
+	local pending = luadev_pending_consume(identifier, sender)
+	if pending == nil then
+		return
+	end
+	local length = net.readUInt(16)
+	local data = net.readData(length)
+	sfc3._print_target(pending.executor, "Syntax error from ", team.getColor(sender:getTeam()), sender:getName(), sfc3.output_color, ": "..data)
+end
+sfc3.net_incoming[sfc3.NET_EVAL_RETURN_ERROR] = function(length, sender)
+	local identifier = net.readUInt(32)
+	local pending = luadev_pending_consume(identifier, sender)
+	if pending == nil then
+		return
+	end
+	local length = net.readUInt(16)
+	local data = net.readData(length)
+	sfc3._print_target(pending.executor, "Runtime error from ", team.getColor(sender:getTeam()), sender:getName(), sfc3.output_color, ": "..data)
+end
 
-hook.add('PlayerSay', sfc3.HOOK, function(sender, message, is_team)
+hook.add('PlayerSay', sfc3.ID_HOOK, function(sender, message, is_team)
 	local short = false
 	if string.sub(message, 1, #command_prefix) == command_prefix then
 		message = string.sub(message, #command_prefix+1)
