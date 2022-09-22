@@ -32,38 +32,7 @@ sfc3.net_incoming[sfc3.NET_PRINT] = function(length)
 	return sfc3._print(unpack(t))
 end
 
-sfc3.net_incoming[sfc3.NET_EVAL] = function(length)
-	local identifier = net.readUInt(32)
-	local executor = net.readEntity()
-	local print_result = net.readBool()
-	local length = net.readUInt(16)
-	local code = net.readData(length)
-	local success, result, syntax = sfc3.eval(identifier, code, executor, print_result)
-	if not success then
-		if syntax then
-			net.start(sfc3.ID_NET)
-				net.writeUInt(sfc3.NET_EVAL_RETURN_SYNTAX, sfc3.NET_BITS)
-				net.writeUInt(identifier, 32)
-				local length = #result
-				net.writeUInt(length, 16)
-				net.writeData(result, length)
-			net.send(SERVER and executor or nil)
-		else
-			net.start(sfc3.ID_NET)
-				net.writeUInt(sfc3.NET_EVAL_RETURN_ERROR, sfc3.NET_BITS)
-				net.writeUInt(identifier, 32)
-				local length = #result
-				net.writeUInt(length, 16)
-				net.writeData(result, length)
-			net.send(SERVER and executor or nil)
-		end
-	elseif print_result then
-		net.start(sfc3.ID_NET)
-			net.writeUInt(sfc3.NET_EVAL_RETURN, sfc3.NET_BITS)
-			net.writeUInt(identifier, 32)
-			local length = #result
-			net.writeUInt(length, 16)
-			net.writeData(result, length)
-		net.send(SERVER and executor or nil)
-	end
-end
+--@include ./sh_luadev.lua
+dofile('./sh_luadev.lua')(sfc3)
+--@include ./cl_luadev.lua
+dofile('./cl_luadev.lua')(sfc3)
