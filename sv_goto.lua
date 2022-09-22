@@ -6,12 +6,16 @@ return function(sfc3)
 	sfc3.goto_seat_pos = seat_pos
 	local seat = prop.createSeat(seat_pos, Angle(), 'models/hunter/plates/plate.mdl', true)
 	sfc3.goto_seat = seat
+	seat:setNoDraw(false)
+	seat:setSolid(false)
+	seat:setColor(Color(0, 0, 0, 0))
+	seat:setDrawShadow(false)
 	
 	local goto_stacks = {}
 	sfc3.goto_stacks = goto_stacks
 	timer.create(sfc3.ID_TIMER..'_goto_stacks_gc', 10, 0, function()
-		for sender in pairs(goto_stacks) do
-			if not sender:isValid() or next(sender) == nil then
+		for sender, stack in pairs(goto_stacks) do
+			if not sender:isValid() or next(stack) == nil then
 				goto_stacks[sender] = nil
 			end
 		end
@@ -22,6 +26,7 @@ return function(sfc3)
 		there = function(sender)
 			return true, sender:getEyeTrace().HitPos
 		end,
+		seat = seat,
 	}
 	sfc3.goto_targets = goto_targets
 	local function goto_target_parse(parameter, sender)
@@ -55,7 +60,7 @@ return function(sfc3)
 			end
 			target = candidates[1]
 		end
-		if type(target) == 'Entity' and not isValid(target) then
+		if type(target) ~= 'Vector' and not isValid(target) then
 			return false, "Invalid entity."
 		end
 		return true, target
@@ -81,8 +86,7 @@ return function(sfc3)
 		if not success then
 			return success, target
 		end
-		sfc3.tprintf(sender, "Target: %q", tostring(target))
-		if type(target) == 'Entity' or type(target) == 'Player' then
+		if type(target) ~= 'Vector' then
 			target = target:getPos()
 		end
 		local stack = goto_stacks[sender]
