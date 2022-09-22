@@ -76,6 +76,9 @@ hook.add('PlayerSay', sfc3.ID_HOOK, function(sender, message, is_team)
 	end
 	local first_space = string.find(message, ' ', nil, true)
 	local command = string.lower(first_space == nil and message or string.sub(message, 1, first_space-1))
+	if short and tonumber(command) ~= nil then
+		return
+	end
 	local command_func = commands[command]
 	if command_func ~= nil then
 		local parameters = first_space == nil and "" or string.sub(message, first_space+1)
