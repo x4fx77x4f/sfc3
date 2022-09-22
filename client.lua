@@ -3,6 +3,8 @@
 --@include ./shared.lua
 local sfc3 = dofile('./shared.lua')
 
+setName(sfc3.output_prefix..chip():getChipName())
+
 if player() == owner() then
 	function sfc3.print(...)
 		return print(sfc3.output_prefix_color, sfc3.output_prefix, sfc3.output_color, ...)
@@ -24,11 +26,14 @@ sfc3.net_incoming[sfc3.NET_PRINT] = function(length)
 		if length < 0 then
 			break
 		elseif net.readBit() == 1 then
-			length = length-8*4
+			length = length-8*3
 			if length < 0 then
 				break
 			end
-			t[i] = net.readColor()
+			local r = net.readUInt(8)
+			local g = net.readUInt(8)
+			local b = net.readUInt(8)
+			t[i] = Color(r, g, b)
 		else
 			local s = net.readString()
 			length = length-(#s+1)*8
