@@ -25,10 +25,10 @@ sfc3.ID_NET = 'sfc3'
 sfc3.ID_HOOK = 'sfc3'
 sfc3.ID_TIMER = 'sfc3'
 enum('NET', {
-	'EVAL',
-	'EVAL_RETURN',
-	'EVAL_RETURN_SYNTAX',
-	'EVAL_RETURN_ERROR',
+	'LUADEV_EVAL',
+	'LUADEV_RETURN',
+	'LUADEV_ERROR_COMPILE',
+	'LUADEV_ERROR_RUNTIME',
 	'PRINT',
 })
 sfc3.net_incoming = {}

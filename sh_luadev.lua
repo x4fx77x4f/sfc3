@@ -1,5 +1,5 @@
 return function(sfc3)
-	function sfc3.eval(identifier, code, executor, print_result)
+	function sfc3.luadev_eval(identifier, code, executor, print_result)
 		local func, err = loadstring(code, "Validation")
 		if func ~= nil and type(func) ~= 'function' then
 			func, err = nil, func
@@ -17,7 +17,7 @@ return function(sfc3)
 		local retvals = {pcall(func)}
 		if not retvals[1] then
 			err = retvals[2]
-			if type(err) == 'table' then -- I hate that I have to do this
+			if type(err) == 'table' then
 				err = rawget(err, 'message')
 			end
 			err = tostring(err)
