@@ -8,7 +8,14 @@ return function(sfc3)
 	sfc3.goto_seat = seat
 	
 	local goto_stacks = {}
-	sfc3.goto_stack = goto_stacks
+	sfc3.goto_stacks = goto_stacks
+	timer.create(sfc3.ID_TIMER..'_goto_stacks_gc', 10, 0, function()
+		for sender in pairs(goto_stacks) do
+			if not sender:isValid() or next(sender) == nil then
+				goto_stacks[sender] = nil
+			end
+		end
+	end)
 	
 	local goto_targets = {
 		chip = chip(),
