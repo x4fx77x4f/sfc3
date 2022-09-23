@@ -1,6 +1,6 @@
 return function(sfc3)
 	function sfc3.luadev_eval(identifier, code, executor, print_result)
-		local func, err = loadstring('return '..code, "Validation")
+		local func, err = loadstring((print_result and 'return ' or ' ')..code, "Validation")
 		if func ~= nil and type(func) ~= 'function' then
 			func, err = nil, func
 		end
