@@ -1,14 +1,18 @@
 return function(sfc3)
-	function sfc3.luadev_eval(identifier, code, executor, print_result)
-		local func, err = loadstring((print_result and 'return ' or ' ')..code, "Validation")
-		if func ~= nil and type(func) ~= 'function' then
+	function sfc3.luadev_loadstring(code, name)
+		local func, err = loadstring(code, name)
+		if func ~= nil and not isfunction(func) then
 			func, err = nil, func
 		end
-		if func == nil and print_result then
-			func, err = loadstring(' '..code, "Validation")
-			if func ~= nil and type(func) ~= 'function' then
-				func, err = nil, func
-			end
+		return func, err
+	end
+	function sfc3.luadev_eval(identifier, code, executor, print_result)
+		local func, err
+		if print_result then
+			func, err = sfc3.luadev_loadstring('return '..code, "Validation")
+		end
+		if func == nil then
+			func, err = sfc3.luadev_loadstring(' '..code, "Validation")
 		end
 		if func == nil then
 			err = tostring(err)
