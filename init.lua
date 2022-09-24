@@ -100,4 +100,9 @@ hook.add('PlayerSay', sfc3.ID_HOOK, function(sender, message, is_team)
 	return ""
 end)
 
-sfc3.printf("Run \"%shelp\" (chip owner only) or \"%shelp\" for commands.", command_prefix_short, command_prefix)
+hook.add('ClientInitialized', sfc3.ID_HOOK, function(ply)
+	if ply ~= owner() then
+		return
+	end
+	sfc3.tprintf(ply, "Run \"%shelp\" (chip owner only) or \"%shelp\" for commands.", command_prefix_short, command_prefix)
+end)
