@@ -33,6 +33,24 @@ return function(sfc3)
 		local target
 		if string.sub(parameter, 1, 1) == '#' then
 			parameter = string.sub(parameter, 2)
+			if (
+				string.sub(parameter, 1, 7) == 'Vector('
+				and string.sub(parameter, -1, -1) == ')'
+			) then
+				local first_comma = string.find(parameter, ',', 1, true)
+				if first_comma ~= nil then
+					local second_comma = string.find(parameter, ',', first_comma+1, true)
+					if second_comma ~= nil then
+						local x = tonumber(string.sub(parameter, 8, first_comma-1))
+						local y = tonumber(string.sub(parameter, first_comma+1, second_comma-1))
+						local z = tonumber(string.sub(parameter, second_comma+1, -2))
+						if x == nil or y == nil or z == nil then
+							return false, "Malformed vector."
+						end
+						return true, Vector(x, y, z)
+					end
+				end
+			end
 			local parser = goto_targets[parameter]
 			if parser == nil then
 				local index = tonumber(parameter)
@@ -41,8 +59,7 @@ return function(sfc3)
 				else
 					return false, string.format("No such target %q.", parameter)
 				end
-			end
-			if type(parser) == 'function' then
+			elseif type(parser) == 'function' then
 				local success
 				success, target = parser(sender)
 				if not success then
